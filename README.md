@@ -1,4 +1,4 @@
-# PoC: “Atlantis” com GitHub Actions + OIDC
+# PoC: “Atlantis” com GitHub Actions
 
 ```
 .
@@ -13,30 +13,16 @@
 └── README.md
 ```
 
+# PoC: “Atlantis” com GitHub Actions + AWS Access Key/Secret
 
-Esta PoC emula o fluxo do Atlantis usando GitHub Actions:
-- `terraform plan` em PRs
-- `terraform apply` quando alguém comenta `/atlantis apply`
-- Sem secrets: AWS OIDC + IAM Role
+Esta prova de conceito mostra como emular o fluxo do **Atlantis** usando apenas **GitHub Actions** e **Terraform**.
 
-## Como usar
-1. Crie a IAM Role na AWS com trust policy para o seu repositório (> OIDC).
-2. Dê permissão mínima (ex.: SSM Parameter).
-3. Adicione o ARN da role em `AWS_ROLE_TO_ASSUME` (secret do repositório).
-4. Abra um PR → o `plan` comenta no PR.
-5. Peça aprovação do PR.
-6. Comente: `/atlantis apply`.
+A ideia é:
+- Rodar `terraform plan` automaticamente quando abrimos ou atualizamos um Pull Request.
+- Rodar `terraform apply` somente quando alguém comenta no PR: `/atlantis apply`.
+- Usar **AWS Access Key e Secret** guardados como **GitHub Secrets**.
 
-## Segurança
-- Apply exige PR **aprovado**.
-- Execução só via OIDC (sem chaves estáticas).
-- Você pode restringir por branch e por environment.
+---
 
-## Limpeza
-- Remova o SSM Parameter após os testes (ou faça um workflow `destroy` se quiser).
-
-## Limitações vs. Atlantis real
-- Não há UI do Atlantis nem lock por workspace remoto.
-- O plano não é “persistido” num servidor Atlantis.
-- Entretanto, para equipes pequenas e demos, é um ótimo começo.
+## Estrutura do Repositório
 

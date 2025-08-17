@@ -15,30 +15,63 @@ env:
 
 jobs:
   apply:
-    if: |
+    # Garante que é PR e tolera espaços/maiúsculas no comentário
+    if: >
       github.event.issue.pull_request != '' &&
-      contains(github.event.comment.body, '/atlantis apply')
+      contains(toJson(github.event.comment.body), '/atlantis apply')
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check PR approval
+      - name: Debug do evento
+        run: |
+          echo "actor=${{ github.actor }}"
+          echo "body<<EOF"
+          echo "${{ github.event.comment.body }}"
+          echo "EOF"
+
+      # (Opcional) Permitir apenas a dona do repo
+      - name: Apenas a @michelleamesquita pode aplicar
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const actor = context.actor;
+            const allowed = ["michelleamesquita"];
+            if (!allowed.includes(actor)) {
+              core.setFailed(`Usuário @${actor} não autorizado a aplicar.`);
+            }
+
+      # Aprovação opcional (sempre seta approved)
+      - name: Check PR approval (opcional)
         id: guard
         uses: actions/github-script@v7
         with:
           script: |
-            const {owner, repo} = context.repo;
+            const requireApproval = false; // mude para true se quiser exigir
+            if (!requireApproval) { core.setOutput('approved','true'); return; }
+            const { owner, repo } = context.repo;  // pega owner/repo corretos
             const prNumber = context.payload.issue.number;
-            const reviews = await github.rest.pulls.listReviews({owner, repo, pull_number: prNumber});
+            const reviews = await github.rest.pulls.listReviews({ owner, repo, pull_number: prNumber });
             const approved = reviews.data.some(r => r.state === 'APPROVED');
             core.setOutput('approved', approved ? 'true' : 'false');
 
       - name: Fail if not approved
-        if: steps.guard.outputs.approved != 'true'
+        if: steps.guard.outputs.approved == 'false'
         run: |
-          echo "PR não aprovado ainda. Peça um review (APPROVED) antes de aplicar."
+          echo "PR não aprovado ainda."
           exit 1
 
+      # Tenta checar o PR HEAD (branch do autor)
       - name: Checkout PR HEAD
+        id: co_head
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.issue.number }}/head
+
+      # Se o HEAD não existir, tenta o merge ref
+      - name: Checkout PR MERGE ref (fallback)
+        if: steps.co_head.outcome != 'success'
         uses: actions/checkout@v4
         with:
           ref: refs/pull/${{ github.event.issue.number }}/merge
@@ -63,6 +96,7 @@ jobs:
         id: apply
         working-directory: terraform
         run: |
+          set -euo pipefail
           terraform apply -auto-approve -no-color \
             -var="suffix=pr-${{ github.event.issue.number }}" 2>&1 | tee apply.txt
           echo "APPLY<<EOF" >> $GITHUB_OUTPUT
