@@ -1,0 +1,82 @@
+name: terraform-apply
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  AWS_REGION: "us-east-1"
+
+jobs:
+  apply:
+    if: |
+      github.event.issue.pull_request != '' &&
+      contains(github.event.comment.body, '/atlantis apply')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check PR approval
+        id: guard
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {owner, repo} = context.repo;
+            const prNumber = context.payload.issue.number;
+            const reviews = await github.rest.pulls.listReviews({owner, repo, pull_number: prNumber});
+            const approved = reviews.data.some(r => r.state === 'APPROVED');
+            core.setOutput('approved', approved ? 'true' : 'false');
+
+      - name: Fail if not approved
+        if: steps.guard.outputs.approved != 'true'
+        run: |
+          echo "PR não aprovado ainda. Peça um review (APPROVED) antes de aplicar."
+          exit 1
+
+      - name: Checkout PR HEAD
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.issue.number }}/merge
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
+      - name: Init
+        working-directory: terraform
+        run: terraform init -input=false
+
+      - name: Apply
+        id: apply
+        working-directory: terraform
+        run: |
+          terraform apply -auto-approve -no-color \
+            -var="suffix=pr-${{ github.event.issue.number }}" 2>&1 | tee apply.txt
+          echo "APPLY<<EOF" >> $GITHUB_OUTPUT
+          sed -E 's/\x1b\[[0-9;]*m//g' apply.txt | tail -n 200 >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Comment Apply Result
+        if: always()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: terraform-apply
+          number: ${{ github.event.issue.number }}
+          message: |
+            **Resultado do Apply (PR #${{ github.event.issue.number }})**
+            ```
+            ${{ steps.apply.outputs.APPLY }}
+            ```
