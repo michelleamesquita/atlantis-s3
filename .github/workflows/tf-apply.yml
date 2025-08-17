@@ -15,34 +15,36 @@ env:
 
 jobs:
   apply:
-    if: |
+    if: >
       github.event.issue.pull_request != '' &&
-      contains(github.event.comment.body, '/atlantis apply')
+      contains(toJson(github.event.comment.body), '/atlantis apply')
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check PR approval
+      - name: Check PR approval (opcional)
+        id: guard
         uses: actions/github-script@v7
         with:
-            script: |
-              const requireApproval = false; // mude para true se quiser exigir
-              if (!requireApproval) {
-                core.setOutput('approved', 'true'); // DEFAULT: aprovado
-                return;
-              }
-              const { owner, repo } = context.repo;   // <-- faltava isso
-              const prNumber = context.payload.issue.number;
-              const reviews = await github.rest.pulls.listReviews({ owner, repo, pull_number: prNumber });
-              const approved = reviews.data.some(r => r.state === 'APPROVED');
-              core.setOutput('approved', approved ? 'true' : 'false');
+          script: |
+            const requireApproval = false; 
+            if (!requireApproval) {
+              core.setOutput('approved','true'); 
+              return;
+            }
+            const owner = "michelleamesquita";
+            const repo = context.repo.repo; // pega o nome do repositório atual
+            const prNumber = context.payload.issue.number;
+            const reviews = await github.rest.pulls.listReviews({ owner, repo, pull_number: prNumber });
+            const approved = reviews.data.some(r => r.state === 'APPROVED');
+            core.setOutput('approved', approved ? 'true' : 'false');
 
       - name: Fail if not approved
-        if: steps.guard.outputs.approved == 'false'   
+        if: steps.guard.outputs.approved == 'false'
         run: |
-          echo "PR não aprovado ainda. Peça um review (APPROVED) antes de aplicar."
+          echo "PR não aprovado ainda."
           exit 1
 
-      - name: Checkout PR HEAD
+      - name: Checkout PR merge ref
         uses: actions/checkout@v4
         with:
           ref: refs/pull/${{ github.event.issue.number }}/merge
