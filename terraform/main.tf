@@ -22,14 +22,23 @@ variable "region" {
   default     = "us-east-1"
 }
 
+variable "project_name" {
+  type        = string
+  default     = "poc-atlantis-actions-michelle"
+}
+
+variable "suffix" {
+  type        = string
+  description = "Sufixo (ex: pr-<num>)"
+  default     = "local"
+}
+
 resource "random_id" "this" {
   byte_length = 2
 }
 
+# 🔄 Agora criamos um BUCKET S3 
 resource "aws_s3_bucket" "example" {
-  bucket = "poc-atlantis-actions-michelle-${random_id.this.hex}"
-}
-
-output "parameter_name" {
-  value = aws_ssm_parameter.example.name
+  bucket = "${var.project_name}-${var.suffix}-${random_id.this.hex}"
+  force_destroy = true # facilita 'destroy' em PoC (apaga objetos junto)
 }
