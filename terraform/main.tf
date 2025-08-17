@@ -26,11 +26,8 @@ resource "random_id" "this" {
   byte_length = 2
 }
 
-# Recurso simples e barato: SSM Parameter (evita nome único global do S3)
-resource "aws_ssm_parameter" "example" {
-  name  = "/${var.project_name}/${var.suffix}-${random_id.this.hex}"
-  type  = "String"
-  value = "created-by-gh-actions"
+resource "aws_s3_bucket" "example" {
+  bucket = "poc-atlantis-actions-michelle-${random_id.this.hex}"
 }
 
 output "parameter_name" {
