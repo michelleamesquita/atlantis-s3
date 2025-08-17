@@ -13,26 +13,15 @@ terraform {
 }
 
 provider "aws" {
-  region = var.region != null ? var.region : "us-east-1"
-}
-
-variable "region" {
-  type        = string
-  description = "Região AWS"
-  default     = "us-east-1"
+  region = var.region
 }
 
 resource "random_id" "this" {
   byte_length = 2
 }
 
-# Recurso simples e barato: SSM Parameter (evita nome único global do S3)
-resource "aws_ssm_parameter" "example" {
-  name  = "/${var.project_name}/${var.suffix}-${random_id.this.hex}"
-  type  = "String"
-  value = "created-by-gh-actions"
-}
-
-output "parameter_name" {
-  value = aws_ssm_parameter.example.name
+# Exemplo com S3 
+resource "aws_s3_bucket" "example" {
+  bucket        = "${var.project_name}-${var.suffix}-${random_id.this.hex}"
+  force_destroy = true
 }
