@@ -1,0 +1,21 @@
+name: Atlantis
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  atlantis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Atlantis
+        uses: runatlantis/atlantis-action@master
+        with:
+          repo-whitelist: "github.com/${{ github.repository }}"
+        env:
+          ATLANTIS_GH_TOKEN: ${{ secrets.ATLANTIS_GH_TOKEN }}
+          ATLANTIS_GH_WEBHOOK_SECRET: ${{ secrets.ATLANTIS_GH_WEBHOOK_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
