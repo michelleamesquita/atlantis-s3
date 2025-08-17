@@ -4,7 +4,7 @@ Este projeto demonstra como usar o Atlantis em conjunto com o GitHub Actions par
 
 O fluxo de trabalho permite que as equipes colaborem em mudanças de infraestrutura através de Pull Requests, com `terraform plan` e `terraform apply` sendo executados e revisados diretamente na interface do GitHub.
 
-## Estrutura do Projeto
+## Estrutura do Projeto 
 
 ```
 .
