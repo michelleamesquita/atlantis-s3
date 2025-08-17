@@ -1,5 +1,6 @@
 # PoC: “Atlantis” com GitHub Actions + OIDC
 
+```
 .
 ├── .github/
 │   └── workflows/
@@ -10,6 +11,7 @@
 │   ├── variables.tf
 │   └── outputs.tf
 └── README.md
+```
 
 
 Esta PoC emula o fluxo do Atlantis usando GitHub Actions:
