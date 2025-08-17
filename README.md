@@ -1,17 +1,5 @@
 # PoC: “Atlantis” com GitHub Actions
 
-```
-.
-├── .github/
-│   └── workflows/
-│       ├── tf-plan.yml
-│       └── tf-apply.yml
-├── terraform/
-│   ├── main.tf
-│   ├── variables.tf
-│   └── outputs.tf
-└── README.md
-```
 
 # PoC: “Atlantis” com GitHub Actions + AWS Access Key/Secret
 
@@ -26,3 +14,15 @@ A ideia é:
 
 ## Estrutura do Repositório
 
+```
+.
+├── .github/
+│   └── workflows/
+│       ├── tf-plan.yml
+│       └── tf-apply.yml
+├── terraform/
+│   ├── main.tf
+│   ├── variables.tf
+│   └── outputs.tf
+└── README.md
+```
