@@ -1,6 +1,3 @@
-# PoC: “Atlantis” com GitHub Actions
-
-
 # PoC: “Atlantis” com GitHub Actions + AWS Access Key/Secret
 
 Esta prova de conceito mostra como emular o fluxo do **Atlantis** usando apenas **GitHub Actions** e **Terraform**.
